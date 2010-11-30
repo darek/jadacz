@@ -1,0 +1,647 @@
+<html>
+<head>
+<title>Jadacz - opis komunikacji</title>
+</head>
+<style>
+body {
+    margin: 40px;
+}
+
+table {
+    border: 1px solid black;
+    width: 90%;
+    margin: 40px;
+    margin-top: 20px;
+}
+
+table caption {
+    font-weight: bold;
+}
+
+td {
+    border: 1px solid black;
+    padding: 8px;
+}
+
+ol {
+    margin-bottom: 25px;
+}
+
+li {
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+#type {
+    width: 40%;
+}
+
+#describe {
+    width: 40%;
+}
+
+#content td{
+    width: 20%;
+}
+
+
+</style>
+<body>
+
+<img src="logo100.png" style="float: left; margin-right: 40px" />
+<h1>Jadacz - opis komunikacji</h1>
+<h3>last update: 19.02.07</h3><br />
+<!--------------------------------------------------->
+
+<h2>I. Rejestracja.</h2>
+
+<ol>
+<li>Wysylamy pakiet <code>TYPE_REGISTER_REQUEST</code> z zawartoscia obiektu klasy <code>UserInfo</code>, ktory posiada dane rejestracji.</li>
+<li>Serwer odpowiada pustym pakietem <code>TYPE_REGISTER_REPLY</code>, ktorego numer JID to numer jaki otrzymalismy. Teraz mozna przejsc do procesu logowania.</li>
+
+<p><strong>Uwaga:</strong> Mozna sie rejestrowac tylko gdy nie jestesmy zalogowani.</p>
+</ol>
+
+
+</ol>
+
+<!--------------------------------------------------->
+
+<h2>II. Logowanie.</h2>
+<ol>
+<li>Po polaczeniu z serwerem klient otrzymuje pusty pakiet <code>TYPE_WELCOME</code>, oznaczajacy gotowosc serwera do przeprowadzenia autoryzacji.</li>
+
+<li>Klient wysyla do serwera pakiet typu <code>TYPE_LOGIN_REQUEST</code> z zawartoscia obiektu klasy <code>LoginRequest</code>.</li>
+
+<li>W zaleznosci od wyniku autoryzacji serwer odsyla pusty pakiet <code>TYPE_LOGIN_SUCCEED</code> lub <code>TYPE_LOGIN_FAILED</code>.</li>
+
+<strong>Uwaga:</strong> dopoki nie otrzymamy od serwera potwierdzenia, ze udalo nam sie zalogowac to bedzie on ignorowac wszelkie inne rodzaje pakietow poza: <code>TYPE_LOGIN_REQUEST</code> i <code>TYPE_REGISTER_REQUEST</code>
+</ol>
+
+<!--------------------------------------------------->
+
+<h2>III. Po zalogowaniu.</h2>
+<ol>
+<li>Serwer przesle nam odrazu nasza liste kontaktow, 1 pakiet 1 osoba. Pakiety typu <code>TYPE_CONTACT_INFO</code> z zawartoscia obiektu klasy <code>Contact</code>.</li>
+
+<li>Nastepnie tyle samo <code>TYPE_STATUS_INFO</code> z zawartoscia obiektow klasy Status, czyli informacje o statusach ludzi z naszej listy.</li>
+
+<li>Nadszedl moment zeby powiedziec naszym znajomym ze jestesmy online, wiec wysylamy pakiet <code>TYPE_STATUS_CHANGE</code>, z klasy <code>Status</code>, nasz status.</li>
+
+<li>Otrzymamy rowniez pakiet <code>TYPE_REGISTER_INFO</code> z naszymi danymi rejestracyjnymi.</li>
+
+<li>Mozemy teraz otrzymac rowniez pakiety typu <code>TYPE_MESSAGE_ARCHIVE</code> z klasy <code>Message</code>. Sa to wiadomosci wyslane do nas w czasie naszej nieobecnosci.</li>
+</ol>
+
+<!--------------------------------------------------->
+
+<h2>IV. Statusy.</h2>
+<ol>
+<li>Za kazdym razem gdy ktos z naszej listy zmieni status dostaniemy paczke <code>TYPE_STATUS_INFO</code>, ktora odpakujemy standardowo do obiektu klasy <code>Status</code> i odczytamy informacje.</li>
+
+<li>Jesli sami chcemy zmienic status to robimy to tak jak w III.3.
+
+<li>Rodzaje statusow sa opisane w klasie <code>Status</code></li>
+
+<li><strong>Wylogowujemy sie</strong> wysylajac jeden ze statusów:
+    <ul>
+    <li><code>Status.TYPE_NOT_AVAILABLE</code></li>
+    <li><code>Status.TYPE_NOT_AVAILABLE_DESCR</code></li>
+    </ul>
+Jak na razie to jedyny sposob aby sie wylogowac.</li>
+</ol>
+
+<!--------------------------------------------------->
+
+<h2>V. Wiadomosci.</h2>
+<ol>
+<li>Wysylanie.
+Wysylamy pakiet wygenerowany z klasy <code>Message</code> rodzaju <code>TYPE_MESSAGE</code>, jesli uzytkownik jest dostepny to otrzyma wiadomosc, jesli nie zostanie ona zapisana na serwerze i nadeslana uzytkownikowi gdy ten sie zaloguje jako <code>TYPE_MESSAGE_ARCHIVE</code></li>
+
+<li>Odbieranie wiadomosc z archiwum opisano w III.4.</li>
+
+<li>Odbieranie wiadomosci "realtime".
+Otrzymamy wiadomosc w pakiecie <code>TYPE_MESSAGE</code>, czas nadejscia wiadomosci zapisany w paczce moze byc nieprawdziwy, wiec lepiej wyswietlac czas aktualny z lokalnej maszyny.</li>
+</ol>
+
+<!--------------------------------------------------->
+
+<h2>VI. Kontakty.</h2>
+<ol>
+<li>Dodawanie.
+pakiet <code>TYPE_CONTACT_ADD</code>, generowany z obiektu klasy <code>Contact</code></li>
+
+<li>Modyfikacja.
+pakiet <code>TYPE_CONTACT_CHANGE</code>, generowany z obiektu klasy <code>Contact</code></li>
+
+<li>Usuwanie.
+pakiet <code>TYPE_CONTACT_DELETE</code>, pusty pakiet z numerem JID usuwanego kontaktu</li>
+
+<br /><strong>Uwaga:</strong> na 2 pierwsze server odpowiada:
+<ul>
+<li><code>TYPE_CONTACT_INFO</code> z zawartoscia obiektu klasy Contact, tego ktory dodalismy badz zmienialismy</li>
+<li><code>TYPE_CONTACT_OPERATION_FAILED</code> w razie niepowodzenia, jid pakietu to numer osoby, a z content mozna zrobic <code>String</code> i bedzie to powod z jakiego operacja sie nie powiodla</li>
+</ul>
+Na <code>TYPE_CONTACT_DELETE</code> serwer odpowie:
+<ul>
+<li><code>TYPE_CONTACT_REMOVED</code> pusty pakiet z numerem jid usunietej osoby</li>
+<li><code>TYPE_CONTACT_OPERATION_FAILED</code> w razie niepowodzenia, jid pakietu to numer osoby, a z content mozna zrobic <code>String</code> i bedzie to powod z jakiego operacja sie nie powiodla</li>
+</ul>
+
+<p>Zmiany ktore dokonalismy sa automatycznie zachowane w bazie danych serwera, wiec przy nowym logowaniu otrzymamy zmodyfikowana liste.</p>
+</ol>
+
+<!--------------------------------------------------->
+
+<h2>VII. Przesylanie plikow.</h2>
+<ol>
+<p><strong>Scenariusz:</strong> Klient A wysyla plik do klienta B.</p>
+
+<li>Klient A wysyla pakiet <code>TYPE_FILE_SEND_REQUEST</code> z informacja o pliku (klasa <code>FileInfo</code>).</li>
+
+<li>Jesli klient B chce przyjac plik odsyla pusty pakiet typu <code>TYPE_FILE_SEND_ACCEPT</code>, jesli nie to wysyla <code>TYPE_FILE_SEND_REJECT i sprawa skonczona.</li>
+
+<li>W przypadku akceptacji, klient A zaczyna wysylac pakiety typu <code>TYPE_FILE_SEND_DATA</code> z zawartoscia obiektow klasy <code>FileData</code>. Gdy klient A skonczy wysylac dane, wysle nastepnie pusty pakiet <code>TYPE_FILE_SEND_COMPLETE</code>.</li>
+
+<li>Gdyby w miedzy czasie klient B sie rozmyslil i nie chcial pobierac dalej pliku to wysyla do klienta A pusty pakiet <code>TYPE_FILE_SEND_CANCEL</code>.</li>
+
+<p>Program kliencki musi zawierac mechanizm ktory po odczytaniu obiektow <code>FileData</code> z pakietow zlozy plik w calosc i zapisze pod zapamietana nazwa ktora otrzymal w pakiecie <code>TYPE_FILE_SEND_REQUEST</code>.</p>
+
+<p><strong>Uwaga:</strong> taki system posiada ograniczenie, ze w danej chwili uzytkownik A moze wysylac tylko 1 plik uzytkownikowi B.</p>
+</ol>
+
+<!--------------------------------------------------->
+
+<h2>VIII. PingPong.</h2>
+<ol>
+Klient moze wysylac co jakis czas do serwera pusty pakiet <code>TYPE_PING</code>, na ktory serwer odpowie pustym pakietem <code>TYPE_PONG</code>.
+
+Czy takie pingowanie jest konieczne i jego czestotliwosc to kwestia do ustalenia.
+</ol>
+
+<!--------------------------------------------------->
+
+<h2>IX. Zmiana danych rejestracyjnych.</h2>
+<ol>
+<p>Wysylamy pakiet <code>TYPE_REGISTER_CHANGE</code> z zawartoscia obiektu klasy <code>UserInfo</code>, ktory posiada dane, na ktore chcemy zmienic informacje o sobie. Server <strong>nie potwierdza</strong> w zaden sposob zmiany tych danych. Jesli zmieniamy haslo to bedzie ono, obowiazywac przy kolejnym logowaniu. Jesli nie chcemy zmieniac hasla wysylamy z danymi puste haslo.</p>
+
+<p><strong>Uwaga:</strong> musimy byc zalogowani.</p>
+</ol>
+
+<!--------------------------------------------------->
+
+<h2>X. Rodzaje pakietow.</h2>
+<br />
+
+<table>
+<caption>Wszystkie</caption>
+<thead><tr><th>Typ</th><th>
+
+Opis
+
+</th></tr></thead><tr>
+<tr><td>TYPE_NOT_SPECIFIED</td><td>
+
+Type is not specified.
+
+</td></tr><tr><td>TYPE_WELCOME</td><td>
+
+Greeting.
+
+</td></tr><tr><td>TYPE_LOGIN_REQUEST</td><td>
+
+Authorization request.
+
+</td></tr><tr><td>TYPE_LOGIN_SUCCEED</td><td>
+
+Authorization succeed.
+
+</td></tr><tr><td>TYPE_LOGIN_FAILED</td><td>
+
+Authorization failed.
+
+</td></tr><tr><td>TYPE_MESSAGE</td><td>
+
+Text message.
+
+</td></tr><tr><td>TYPE_ARCHIVE_MESSAGE</td><td>
+
+Archive message (sent when recipment were offline).
+
+</td></tr><tr><td>TYPE_STATUS_CHANGE</td><td>
+
+Status change request.
+
+</td></tr><tr><td>TYPE_STATUS_INFO</td><td>
+
+Status information.
+
+</td></tr><tr><td>TYPE_REGISTER_REQUEST</td><td>
+
+User registration request.
+
+</td></tr><tr><td>TYPE_REGISTER_REPLY</td><td>
+
+Reply to user registration request.
+
+</td></tr><tr><td>TYPE_REGISTER_CHANGE</td><td>
+
+Change user registration info.
+
+</td></tr><tr><td>TYPE_REGISTER_INFO</td><td>
+
+User registration info.
+
+</td></tr><tr><td>TYPE_FILE_SEND_REQUEST</td><td>
+
+File send request.File send acceptation.
+
+</td></tr><tr><td>TYPE_FILE_SEND_ACCEPT</td><td>
+
+File send acceptation.
+
+</td></tr><tr><td>TYPE_FILE_SEND_REJECT</td><td>
+
+File send rejection.
+
+</td></tr><tr><td>TYPE_FILE_SEND_DATA</td><td>
+
+File send data.
+
+</td></tr><tr><td>TYPE_FILE_SEND_CANCEL</td><td>
+
+File send cancellation.
+
+</td></tr><tr><td>TYPE_FILE_SEND_COMPLETE</td><td>
+
+File send complete notification.
+
+</td></tr><tr><td>TYPE_CONTACT_INFO</td><td>
+
+Contact information.
+
+</td></tr><tr><td>TYPE_CONTACT_ADD</td><td>
+
+Contact addition.
+
+</td></tr><tr><td>TYPE_CONTACT_CHANGE</td><td>
+
+Contact modification.
+
+</td></tr><tr><td>TYPE_CONTACT_DELETE</td><td>
+
+Contact anihilation :).
+
+</td></tr><tr><td>TYPE_CONTACT_REMOVED</td><td>
+
+Contact has been removed.
+
+</td></tr><tr><td>TYPE_CONTACT_OPERATION_FAILED</td><td>
+
+Contact operation failed.
+
+</td></tr><tr><td>TYPE_PING</td><td>
+
+Ping.
+
+</td></tr><tr><td>TYPE_PONG</td><td>
+
+Pong - reply to ping.
+
+</td></tr><tr><td>TYPE_PASSWORD_REMIND</td><td>
+
+User whants get password to his email.
+
+</td></tr></table>
+
+
+
+
+
+
+<table>
+<caption>Client - Server</caption>
+
+<colgroup>
+  <col id="type" />
+  <col id="describe" />
+  <col id="content" />
+</colgroup>
+
+<thead><tr>
+<th>Typ</th><th>Opis</th><th>Zawartosc</th>
+</tr></thead></tr>
+
+<tr><td>TYPE_WELCOME</td><td>
+
+Greeting.
+
+</td><td>
+<i><i>(pusty)</i></i>
+
+</td></tr><tr><td>TYPE_LOGIN_REQUEST</td><td>
+
+Authorization request.
+
+</td><td>
+LoginRequest
+
+</td></tr><tr><td>TYPE_STATUS_CHANGE</td><td>
+
+Status change request.
+
+</td><td>
+Status
+
+</td></tr><tr><td>TYPE_REGISTER_REQUEST</td><td>
+
+User registration request.
+
+</td><td>
+UserInfo
+
+</td></tr><tr><td>TYPE_REGISTER_CHANGE</td><td>
+
+Change user registration info.
+
+</td><td>
+UserInfo
+
+</td></tr><tr><td>TYPE_CONTACT_ADD</td><td>
+
+Contact addition.
+
+</td><td>
+Contact
+
+</td></tr><tr><td>TYPE_CONTACT_CHANGE</td><td>
+
+Contact modification.
+
+</td><td>
+Contact
+
+</td></tr><tr><td>TYPE_CONTACT_DELETE</td><td>
+
+Contact anihilation :).
+
+</td><td>
+<i>(pusty)</i>
+
+</td></tr><tr><td>TYPE_PING</td><td>
+
+Ping.
+
+</td><td>
+<i>(pusty)</i>
+
+</td></tr><tr><td>TYPE_PASSWORD_REMIND</td><td>
+
+User whants get password to his email.
+
+</td><td>
+<i>(pusty)</i>
+
+</td></tr></table>
+
+
+
+
+
+
+
+
+
+
+
+
+<table>
+<caption>Server - Client</caption>
+
+<colgroup>
+  <col id="type" />
+  <col id="describe" />
+  <col id="content" />
+</colgroup>
+
+<thead><tr>
+<th>Typ</th><th>Opis</th><th>Zawartosc</th>
+</tr></thead></tr>
+<tr><td>TYPE_LOGIN_SUCCEED</td><td>
+
+Authorization succeed.
+
+</td><td>
+<i>(pusty)</i>
+
+</td></tr><tr><td>TYPE_LOGIN_FAILED</td><td>
+
+Authorization failed.
+
+</td><td>
+<i>(pusty)</i>
+
+</td></tr><tr><td>TYPE_ARCHIVE_MESSAGE</td><td>
+
+Archive message (sent when recipment were offline).
+
+</td><td>
+Message
+
+</td></tr><tr><td>TYPE_STATUS_INFO</td><td>
+
+Status information.
+
+</td><td>
+Status
+
+</td></tr><tr><td>TYPE_REGISTER_REPLY</td><td>
+
+Reply to user registration request.
+
+</td><td>
+<i>(pusty)</i>*
+
+</td></tr><tr><td>TYPE_REGISTER_INFO</td><td>
+
+User registration info.
+
+</td><td>
+UserInfo
+
+</td></tr><tr><td>TYPE_CONTACT_INFO</td><td>
+
+Contact information.
+
+</td><td>
+Contact
+
+</td></tr><tr><td>TYPE_CONTACT_REMOVED</td><td>
+
+Contact has been removed.
+
+</td><td>
+<i>(pusty)</i>
+
+</td></tr><tr><td>TYPE_CONTACT_OPERATION_FAILED</td><td>
+
+Contact operation failed.
+
+</td><td>
+<i>(pusty)</i>
+
+</td></tr><tr><td>TYPE_PONG</td><td>
+
+Pong - reply to ping.
+
+</td><td>
+<i>(pusty)</i>
+
+</td></tr>
+</table>
+<p>* - odpowiedzia jest jid pakietu, czyli numer jaki zostal nam przydzielony lub 0 w przypadku niepowodzenia</p>
+
+
+<table>
+<caption>Client - (Server) - Client</caption>
+
+<colgroup>
+  <col id="type" />
+  <col id="describe" />
+  <col id="content" />
+</colgroup>
+
+<thead><tr>
+<th>Typ</th><th>Opis</th><th>Zawartosc</th>
+</tr></thead></tr>
+
+<tr><td>TYPE_MESSAGE</td><td>
+
+Text message.
+
+</td><td>
+Message
+
+</td></tr><tr><td>TYPE_FILE_SEND_REQUEST</td><td>
+
+File send request.File send acceptation.
+
+</td><td>
+FileInfo
+
+</td></tr><tr><td>TYPE_FILE_SEND_ACCEPT</td><td>
+
+File send acceptation.
+
+</td><td>
+<i>(pusty)</i>
+
+</td></tr><tr><td>TYPE_FILE_SEND_REJECT</td><td>
+
+File send rejection.
+
+</td><td>
+<i>(pusty)</i>
+
+</td></tr><tr><td>TYPE_FILE_SEND_DATA</td><td>
+
+File send data.
+
+</td><td>
+FileData
+
+</td></tr><tr><td>TYPE_FILE_SEND_CANCEL</td><td>
+
+File send cancellation.
+
+</td><td>
+<i>(pusty)</i>
+
+</td></tr><tr><td>TYPE_FILE_SEND_COMPLETE</td><td>
+
+File send complete notification.
+
+</td><td>
+<i>(pusty)</i>
+
+</td></tr>
+
+
+</table>
+
+
+<!---------------------------------->
+
+
+<h2>XI. Rodzaje statusow.</h2>
+
+
+<table>
+<thead><tr><th>Opis</th><th>
+Typ
+</th></tr></thead><tr>
+
+<tr><td>
+User is not available.
+</td><td>
+TYPE_NOT_AVAILABLE
+</td></tr><tr><td>
+User is not available, but he left description.
+</td><td>
+TYPE_NOT_AVAILABLE_DESCR
+</td></tr><tr><td>
+User is available.
+</td><td>
+TYPE_AVAILABLE
+</td></tr><tr><td>
+User is available and status has a description.
+</td><td>
+TYPE_AVAILABLE_DESCR
+</td></tr><tr><td>
+User is available, but he's busy right now.
+</td><td>
+TYPE_BUSY
+</td></tr><tr><td>
+User is available, but he's busy right now
+and status has a description.
+</td><td>
+TYPE_BUSY_DESCR
+</td></tr><tr><td>
+User is available, but another users see this status
+as not available.
+This status is sent only by clients, server translate
+it to <code>TYPE_NOT_AVAILABLE</code>.
+</td><td>
+TYPE_HIDDEN
+</td></tr><tr><td>
+User is available, but another users see this status
+as not available with description.
+This status is sent only by clients, server translate
+it to <code>TYPE_NOT_AVAILABLE_DESCR</code>.
+</td><td>
+TYPE_HIDDEN_DESCR
+</td></tr><tr><td>
+User is online, but he's away.
+</td><td>
+TYPE_BE_RIGHT_BACK
+</td></tr><tr><td>
+User invites for conversation.
+</td><td>
+TYPE_EAT_ME
+</td></tr><tr><td>
+User has blocked recipment of this status info.
+</td><td>
+TYPE_BLOCKED
+</td></tr></table>
+
+
+
+
+
+
+</body>
+</html>
+
+
+
+

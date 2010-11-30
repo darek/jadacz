@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+<comment>Server Config</comment>
+<entry key="port">8060</entry>
+<entry key="dbuser">a_jadacz</entry>
+<entry key="dbpass">jadacz2007</entry>
+<entry key="dbtype">mysql</entry>
+<entry key="dbsrv">750.m.tld.pl</entry>
+<entry key="dbport">3306</entry>
+<entry key="dbname">baza_jadacz</entry>
+<entry key="jdbcdriver">com.mysql.jdbc.Driver</entry>
+</properties>
